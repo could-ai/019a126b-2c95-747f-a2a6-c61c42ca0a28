@@ -1,91 +1,56 @@
 import 'package:flutter/material.dart';
-import '../data/screen_definitions.dart';
+import 'package:couldai_user_app/models/screen_definition_model.dart';
+import 'package:couldai_user_app/data/screen_definitions.dart';
 
 class DynamicScreen extends StatelessWidget {
   const DynamicScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as int? ?? 1;
-    final screenDef = screenDefinitions.firstWhere(
-      (def) => def['id'] == args,
-      orElse: () => screenDefinitions[0],
-    );
+    final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+    final screenId = args?['screenId'] as int? ?? 1;
+    final def = screenDefinitions.firstWhere((d) => d.id == screenId, orElse: () => screenDefinitions.first);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(def.title),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              screenDef['title'] as String,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
-            ...(screenDef['blocks'] as List).map((block) {
-              final b = block as Map<String, dynamic>;
-              switch (b['type']) {
-                case 'text':
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(b['value'] as String),
-                  );
-                case 'image':
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Image.network(
-                      b['value'] as String,
-                      height: 200,
-                      fit: BoxFit.cover,
-                    ),
-                  );
-                case 'button':
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          final action = b['action'] as Map<String, dynamic>;
-                          if (action['type'] == 'navigate') {
-                            Navigator.of(context).pushNamed(action['route'] as String);
-                          } else if (action['type'] == 'alert') {
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: Text(action['title'] ?? 'Info'),
-                                content: Text(action['message'] ?? ''),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1877F2),
-                        ),
-                        child: Text(
-                          b['value'] as String,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  );
-                default:
-                  return const SizedBox.shrink();
-              }
-            }),
-          ],
+          children: def.blocks.map((block) {
+            if (block.type == 'text') {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Text(block.value),
+              );
+            }
+            if (block.type == 'image') {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(block.value),
+                ),
+              );
+            }
+            if (block.type == 'button') {
+              return ElevatedButton(
+                onPressed: () {
+                  if (block.action?.type == 'navigate') {
+                    Navigator.of(context).pushNamed(block.action!.route);
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1877F2),
+                  minimumSize: const Size(double.infinity, 48),
+                ),
+                child: Text(block.value, style: const TextStyle(color: Colors.white)),
+              );
+            }
+            return const SizedBox.shrink();
+          }).toList(),
         ),
       ),
     );

@@ -1,43 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import '../components/post_card.dart';
-import '../data/sample_feed.dart';
+import 'package:couldai_user_app/widgets/post_card.dart';
+import 'package:couldai_user_app/models/post_model.dart';
+import 'package:couldai_user_app/data/sample_feed.dart';
+import 'package:couldai_user_app/utils/api.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Map<String, dynamic>> feed = sampleFeed;
+  List<Post> _feed = sampleFeed;
 
   @override
   void initState() {
     super.initState();
-    _loadFeed();
+    _fetchFeed();
   }
 
-  Future<void> _loadFeed() async {
+  Future<void> _fetchFeed() async {
     try {
-      final response = await http.get(Uri.parse('https://picsum.photos/v2/list?page=2&limit=10'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as List;
-        setState(() {
-          feed = data.map((item) {
-            return {
-              'id': 'p_${item['id']}',
-              'user': {'name': item['author']},
-              'text': 'Shared a photo',
-              'media': [item['download_url']],
-            };
-          }).toList();
-        });
-      }
+      final posts = await fetchPosts();
+      setState(() {
+        _feed = posts;
+      });
     } catch (e) {
-      // Fallback to sample feed
+      // If API fails, the sample feed is already set
     }
   }
 
@@ -46,42 +36,39 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF0F2F5),
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 2,
         title: const Text(
           'Snaygram',
           style: TextStyle(
             color: Color(0xFF1877F2),
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Text('💬'),
-            onPressed: () => Navigator.of(context).pushNamed('/chatlist'),
+            icon: const Icon(Icons.chat_bubble_outline),
+            onPressed: () => Navigator.of(context).pushNamed('/chat'),
           ),
           IconButton(
-            icon: const Text('📞'),
+            icon: const Icon(Icons.call_outlined),
             onPressed: () => Navigator.of(context).pushNamed('/calls'),
           ),
         ],
+        backgroundColor: Colors.white,
+        elevation: 2,
       ),
       body: ListView.builder(
-        itemCount: feed.length,
+        itemCount: _feed.length,
         itemBuilder: (context, index) {
           return PostCard(
-            post: feed[index],
-            onOpen: () => Navigator.of(context).pushNamed('/dynamic', arguments: 1),
+            post: _feed[index],
+            onOpen: () => Navigator.of(context).pushNamed('/dynamic', arguments: {'screenId': 1}),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.of(context).pushNamed('/camera'),
         backgroundColor: const Color(0xFF1877F2),
-        child: const Text(
-          '+',
-          style: TextStyle(color: Colors.white, fontSize: 20),
-        ),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

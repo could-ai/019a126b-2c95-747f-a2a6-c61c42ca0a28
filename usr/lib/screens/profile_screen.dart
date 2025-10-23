@@ -10,7 +10,7 @@ class ProfileScreen extends StatelessWidget {
         title: const Text('Profile'),
       ),
       body: const Center(
-        child: Text('Profile Screen - Placeholder'),
+        child: Text('Profile Screen'),
       ),
     );
   }
