@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'post_card.dart';
+import '../components/post_card.dart';
 import '../data/sample_feed.dart';
 
 class HomeScreen extends StatefulWidget {
